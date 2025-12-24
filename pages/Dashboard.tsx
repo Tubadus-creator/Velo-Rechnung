@@ -1,20 +1,55 @@
-import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Plus, Download, Search, AlertCircle, TrendingUp, FileText, FileEdit, Scale, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
+} from 'recharts';
+import { 
+  Plus, Search, AlertCircle, TrendingUp, FileEdit, Scale, AlertTriangle, 
+  Calendar, BarChart2, Activity, CheckCircle2, ArrowRight, Clock 
+} from 'lucide-react';
 import Button from '../components/Button';
-import { MOCK_INVOICES, MOCK_QUOTES, MOCK_REMINDERS, MOCK_COLLECTIONS, CHART_DATA } from '../constants';
+import { MOCK_INVOICES, MOCK_QUOTES, MOCK_REMINDERS, MOCK_COLLECTIONS } from '../constants';
 import { Link } from 'react-router-dom';
 
-const COLORS = ['#0F4C81', '#F2943F', '#ef4444', '#e5e7eb'];
+// --- Mock Data for Charts ---
+const DATA_MONTHLY = [
+  { name: 'Jan', income: 4000, expense: 2400 },
+  { name: 'Feb', income: 3000, expense: 1398 },
+  { name: 'Mär', income: 2000, expense: 9800 },
+  { name: 'Apr', income: 2780, expense: 3908 },
+  { name: 'Mai', income: 1890, expense: 4800 },
+  { name: 'Jun', income: 2390, expense: 3800 },
+  { name: 'Jul', income: 3490, expense: 4300 },
+  { name: 'Aug', income: 4200, expense: 2100 },
+  { name: 'Sep', income: 5100, expense: 3200 },
+];
+
+const DATA_QUARTERLY = [
+  { name: 'Q1', income: 9000, expense: 13598 },
+  { name: 'Q2', income: 7060, expense: 12508 },
+  { name: 'Q3', income: 12790, expense: 9600 }, // Projected
+  { name: 'Q4', income: 0, expense: 0 },
+];
+
+const DATA_YEARLY = [
+  { name: '2021', income: 45000, expense: 32000 },
+  { name: '2022', income: 52000, expense: 38000 },
+  { name: '2023', income: 68000, expense: 45000 },
+  { name: '2024', income: 28850, expense: 35706 }, // YTD
+];
 
 const Dashboard: React.FC = () => {
-  const pieData = [
-    { name: 'Bezahlt', value: 400 },
-    { name: 'Offen', value: 300 },
-    { name: 'Überfällig', value: 100 },
-  ];
+  // --- State for Chart Controls ---
+  const [timeframe, setTimeframe] = useState<'month' | 'quarter' | 'year'>('month');
+  const [chartType, setChartType] = useState<'area' | 'bar'>('area');
 
-  // Calculate Stats
+  // Select Data based on timeframe
+  const currentChartData = timeframe === 'month' 
+    ? DATA_MONTHLY 
+    : timeframe === 'quarter' 
+      ? DATA_QUARTERLY 
+      : DATA_YEARLY;
+
+  // --- Calculate KPI Stats ---
   const stats = {
     openQuotes: MOCK_QUOTES.filter(q => q.status === 'sent' || q.status === 'draft').length,
     openQuotesValue: MOCK_QUOTES.filter(q => q.status === 'sent' || q.status === 'draft').reduce((acc, q) => acc + q.total, 0),
@@ -24,14 +59,22 @@ const Dashboard: React.FC = () => {
     collectionValue: MOCK_COLLECTIONS.filter(c => c.status === 'in_progress' || c.status === 'submitted').reduce((acc, c) => acc + c.totalAmount, 0),
   };
 
+  // --- Mock Tasks ---
+  const tasks = [
+    { id: 1, type: 'quote', title: 'Angebot nachfassen', desc: 'Webagentur Schmidt (AG-2024-001)', date: 'Heute', priority: 'high' },
+    { id: 2, type: 'invoice', title: 'Rechnung fertigstellen', desc: 'Entwurf für Tech Solutions', date: 'Morgen', priority: 'medium' },
+    { id: 3, type: 'reminder', title: '3. Mahnung prüfen', desc: 'Design Studio überfällig seit 14 Tagen', date: 'Überfällig', priority: 'high' },
+  ];
+
   return (
     <div className="min-h-screen bg-velo-light dark:bg-slate-950 pt-24 pb-12 transition-colors duration-300">
       <div className="container mx-auto px-4">
+        
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h1 className="text-3xl font-bold text-velo-dark dark:text-white">Dashboard</h1>
-                <p className="text-velo-dark/60 dark:text-slate-400">Übersicht Ihrer Finanzen & Dokumente</p>
+                <p className="text-velo-dark/60 dark:text-slate-400">Finanzübersicht & Aufgaben</p>
             </div>
             <div className="flex gap-3">
                  <Link to="/quotes">
@@ -47,13 +90,13 @@ const Dashboard: React.FC = () => {
             </div>
         </div>
 
-        {/* Core Stats Cards */}
+        {/* KPI Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm transition-colors">
-                <div className="text-sm text-velo-dark/60 dark:text-slate-400 mb-1">Umsatz (Mai)</div>
-                <div className="text-2xl font-bold text-velo-blue dark:text-white">€ 12.450,00</div>
+                <div className="text-sm text-velo-dark/60 dark:text-slate-400 mb-1">Umsatz (Aktueller Monat)</div>
+                <div className="text-2xl font-bold text-velo-blue dark:text-white">€ 5.100,00</div>
                 <div className="text-xs text-green-500 mt-2 flex items-center gap-1">
-                    <TrendingUp size={14} /> +12%
+                    <TrendingUp size={14} /> +21% ggü. Vormonat
                 </div>
             </div>
             
@@ -64,7 +107,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="text-2xl font-bold text-velo-dark dark:text-white">{stats.openQuotes}</div>
                 <div className="text-xs text-velo-dark/40 dark:text-slate-500 mt-2">
-                    Wert: € {stats.openQuotesValue.toFixed(2)}
+                    Pipeline: € {stats.openQuotesValue.toFixed(2)}
                 </div>
             </div>
 
@@ -91,29 +134,145 @@ const Dashboard: React.FC = () => {
             </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8 mb-8">
-            {/* Main Chart */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm h-[400px] transition-colors">
-                <h3 className="font-bold text-velo-dark dark:text-white mb-6">Umsatzentwicklung</h3>
+        {/* Main Finance Chart Section */}
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm mb-8 transition-colors">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <h3 className="font-bold text-lg text-velo-dark dark:text-white flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-velo-blue" />
+                    Finanzentwicklung
+                </h3>
+                
+                <div className="flex flex-wrap items-center gap-3">
+                    {/* Timeframe Toggles */}
+                    <div className="bg-gray-100 dark:bg-slate-800 p-1 rounded-lg flex text-xs font-medium">
+                        <button 
+                            onClick={() => setTimeframe('month')}
+                            className={`px-3 py-1.5 rounded-md transition-colors ${timeframe === 'month' ? 'bg-white dark:bg-slate-600 shadow-sm text-velo-blue dark:text-white' : 'text-gray-500 dark:text-slate-400 hover:text-velo-dark'}`}
+                        >
+                            Monat
+                        </button>
+                        <button 
+                            onClick={() => setTimeframe('quarter')}
+                            className={`px-3 py-1.5 rounded-md transition-colors ${timeframe === 'quarter' ? 'bg-white dark:bg-slate-600 shadow-sm text-velo-blue dark:text-white' : 'text-gray-500 dark:text-slate-400 hover:text-velo-dark'}`}
+                        >
+                            Quartal
+                        </button>
+                        <button 
+                            onClick={() => setTimeframe('year')}
+                            className={`px-3 py-1.5 rounded-md transition-colors ${timeframe === 'year' ? 'bg-white dark:bg-slate-600 shadow-sm text-velo-blue dark:text-white' : 'text-gray-500 dark:text-slate-400 hover:text-velo-dark'}`}
+                        >
+                            Jahr
+                        </button>
+                    </div>
+
+                    {/* Chart Type Toggles */}
+                    <div className="bg-gray-100 dark:bg-slate-800 p-1 rounded-lg flex text-xs">
+                        <button 
+                            onClick={() => setChartType('area')}
+                            className={`p-1.5 rounded-md transition-colors ${chartType === 'area' ? 'bg-white dark:bg-slate-600 shadow-sm text-velo-blue dark:text-white' : 'text-gray-500 dark:text-slate-400'}`}
+                            title="Flächendiagramm"
+                        >
+                            <Activity size={16} />
+                        </button>
+                        <button 
+                            onClick={() => setChartType('bar')}
+                            className={`p-1.5 rounded-md transition-colors ${chartType === 'bar' ? 'bg-white dark:bg-slate-600 shadow-sm text-velo-blue dark:text-white' : 'text-gray-500 dark:text-slate-400'}`}
+                            title="Balkendiagramm"
+                        >
+                            <BarChart2 size={16} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={CHART_DATA} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#0F4C81" stopOpacity={0.1}/>
-                                <stop offset="95%" stopColor="#0F4C81" stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" strokeOpacity={0.2} />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
-                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
-                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                        <Area type="monotone" dataKey="revenue" stroke="#0F4C81" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                    </AreaChart>
+                    {chartType === 'area' ? (
+                        <AreaChart data={currentChartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                            <defs>
+                                <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#0F4C81" stopOpacity={0.1}/>
+                                    <stop offset="95%" stopColor="#0F4C81" stopOpacity={0}/>
+                                </linearGradient>
+                                <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#F2943F" stopOpacity={0.1}/>
+                                    <stop offset="95%" stopColor="#F2943F" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" strokeOpacity={0.2} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} tickFormatter={(val) => `€${val/1000}k`} />
+                            <Tooltip 
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.95)' }} 
+                                formatter={(value: number) => [`€ ${value.toLocaleString()}`, '']}
+                            />
+                            <Legend verticalAlign="top" height={36} iconType="circle" />
+                            <Area name="Einnahmen" type="monotone" dataKey="income" stroke="#0F4C81" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" />
+                            <Area name="Ausgaben" type="monotone" dataKey="expense" stroke="#F2943F" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" />
+                        </AreaChart>
+                    ) : (
+                        <BarChart data={currentChartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" strokeOpacity={0.2} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
+                            <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} tickFormatter={(val) => `€${val/1000}k`} />
+                            <Tooltip 
+                                cursor={{fill: 'transparent'}}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} 
+                                formatter={(value: number) => [`€ ${value.toLocaleString()}`, '']}
+                            />
+                            <Legend verticalAlign="top" height={36} iconType="circle" />
+                            <Bar name="Einnahmen" dataKey="income" fill="#0F4C81" radius={[4, 4, 0, 0]} />
+                            <Bar name="Ausgaben" dataKey="expense" fill="#F2943F" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    )}
                 </ResponsiveContainer>
+            </div>
+        </div>
+
+        {/* Middle Section: Tasks & Risk */}
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+            
+            {/* Task List (Aufgaben) */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm flex flex-col h-full overflow-hidden transition-colors">
+                <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                    <h3 className="font-bold text-velo-dark dark:text-white flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-velo-blue" />
+                        Offene Aufgaben
+                    </h3>
+                    <span className="bg-velo-blue/10 text-velo-blue text-xs font-bold px-2 py-1 rounded-full">{tasks.length}</span>
+                </div>
+                <div className="flex-1 p-0">
+                    <div className="divide-y divide-gray-100 dark:divide-slate-800">
+                        {tasks.map((task) => (
+                            <div key={task.id} className="p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors flex items-center justify-between group">
+                                <div className="flex items-start gap-4">
+                                    <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
+                                        task.priority === 'high' ? 'bg-red-500' : 'bg-yellow-500'
+                                    }`} />
+                                    <div>
+                                        <div className="font-medium text-velo-dark dark:text-white text-sm">{task.title}</div>
+                                        <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">{task.desc}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-500 bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded">
+                                        <Clock size={12} /> {task.date}
+                                    </div>
+                                    <button className="text-velo-blue opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <ArrowRight size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="p-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-100 dark:border-slate-800 text-center">
+                    <button className="text-sm text-velo-blue font-medium hover:underline">Alle Aufgaben anzeigen</button>
+                </div>
             </div>
 
             {/* Risk Widget */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm h-auto flex flex-col transition-colors">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm h-full flex flex-col transition-colors">
                 <div className="flex items-center gap-2 mb-6">
                     <AlertTriangle className="h-5 w-5 text-orange-500" />
                     <div>
