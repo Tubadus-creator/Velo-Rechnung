@@ -14,6 +14,7 @@ import CustomersPage from './pages/CustomersPage';
 import SuppliersPage from './pages/SuppliersPage';
 import ProductsPage from './pages/ProductsPage';
 import DocumentsPage from './pages/DocumentsPage';
+import TasksPage from './pages/TasksPage';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -313,6 +314,7 @@ const App: React.FC = () => {
             <Route path="/suppliers" element={<SuppliersPage />} />
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
+            <Route path="/tasks" element={<TasksPage />} />
           </Routes>
         </main>
         <Footer />

@@ -267,7 +267,9 @@ const Dashboard: React.FC = () => {
                     </div>
                 </div>
                 <div className="p-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-100 dark:border-slate-800 text-center">
-                    <button className="text-sm text-velo-blue font-medium hover:underline">Alle Aufgaben anzeigen</button>
+                    <Link to="/tasks" className="text-sm text-velo-blue font-medium hover:underline inline-block w-full h-full">
+                        Alle Aufgaben anzeigen
+                    </Link>
                 </div>
             </div>
 
