@@ -32,7 +32,7 @@ const LandingPage: React.FC = () => {
                 <span className="text-velo-orange">mit automatischem Zahlungsabgleich</span>
               </h1>
               <p className="text-xl md:text-2xl mb-8 opacity-90 leading-relaxed">
-                Günstiger als Lexoffice & SevDesk. Professionelle Rechnungen in 60 Sekunden – DSGVO-konform.
+                Professionelle Rechnungen in 60 Sekunden – DSGVO-konform.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Link to="/rechnung-erstellen">
