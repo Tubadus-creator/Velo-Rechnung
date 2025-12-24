@@ -8,11 +8,26 @@ const Header: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const location = useLocation();
 
-  const navItems = [
+  const isDashboard = location.pathname.startsWith('/dashboard') || 
+                      location.pathname.startsWith('/quotes') ||
+                      location.pathname.startsWith('/reminders') ||
+                      location.pathname.startsWith('/collection');
+
+  const marketingNavItems = [
     { label: 'Funktionen', href: '/#features' },
     { label: 'Preise', href: '/#pricing' },
     { label: 'API Docs', href: '/api-docs' },
   ];
+
+  const appNavItems = [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Angebote', href: '/quotes' },
+    { label: 'Rechnungen', href: '/rechnung-erstellen' }, // Temporarily pointing to generator
+    { label: 'Mahnungen', href: '/reminders' },
+    { label: 'Inkasso', href: '/collection' },
+  ];
+
+  const currentNavItems = isDashboard ? appNavItems : marketingNavItems;
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('velo-theme') as 'light' | 'dark' | null;
@@ -44,7 +59,7 @@ const Header: React.FC = () => {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
-          {navItems.map((item) => (
+          {currentNavItems.map((item) => (
             <Link 
               key={item.label}
               to={item.href}
@@ -63,12 +78,21 @@ const Header: React.FC = () => {
            >
              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
            </button>
-           <Link to="/dashboard">
-             <Button variant="ghost" size="sm">Login</Button>
-           </Link>
-           <Link to="/rechnung-erstellen">
-            <Button variant="secondary" size="sm">Kostenlos testen</Button>
-          </Link>
+           
+           {!isDashboard ? (
+             <>
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm">Login</Button>
+                </Link>
+                <Link to="/rechnung-erstellen">
+                  <Button variant="secondary" size="sm">Kostenlos testen</Button>
+                </Link>
+             </>
+           ) : (
+             <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-velo-blue text-white flex items-center justify-center text-sm font-bold">V</div>
+             </div>
+           )}
         </div>
 
         {/* Mobile Toggle & Menu Button */}
@@ -91,7 +115,7 @@ const Header: React.FC = () => {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden absolute top-20 left-0 right-0 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-4 flex flex-col gap-4 shadow-xl">
-          {navItems.map((item) => (
+          {currentNavItems.map((item) => (
             <Link 
               key={item.label}
               to={item.href}
@@ -102,12 +126,16 @@ const Header: React.FC = () => {
             </Link>
           ))}
           <div className="h-px bg-gray-100 dark:bg-slate-800 my-2" />
-          <Link to="/dashboard" onClick={() => setIsOpen(false)}>
-            <Button variant="ghost" fullWidth>Login</Button>
-          </Link>
-           <Link to="/rechnung-erstellen" onClick={() => setIsOpen(false)}>
-            <Button variant="secondary" fullWidth>Kostenlos testen</Button>
-          </Link>
+          {!isDashboard && (
+            <>
+              <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                <Button variant="ghost" fullWidth>Login</Button>
+              </Link>
+              <Link to="/rechnung-erstellen" onClick={() => setIsOpen(false)}>
+                <Button variant="secondary" fullWidth>Kostenlos testen</Button>
+              </Link>
+            </>
+          )}
         </div>
       )}
     </header>

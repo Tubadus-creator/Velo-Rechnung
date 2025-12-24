@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Download, FileText } from 'lucide-react';
+import { Plus, Trash2, Download, FileText, X, Upload } from 'lucide-react';
 import Button from '../components/Button';
 
 interface Item {
@@ -12,6 +12,7 @@ interface Item {
 const InvoiceGenerator: React.FC = () => {
   const [items, setItems] = useState<Item[]>([{ id: 1, desc: '', qty: 1, price: 0 }]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [logo, setLogo] = useState<string | null>(null);
 
   const addItem = () => {
     setItems([...items, { id: Date.now(), desc: '', qty: 1, price: 0 }]);
@@ -25,6 +26,17 @@ const InvoiceGenerator: React.FC = () => {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const subtotal = items.reduce((acc, item) => acc + (item.qty * item.price), 0);
   const tax = subtotal * 0.19;
   const total = subtotal + tax;
@@ -33,9 +45,9 @@ const InvoiceGenerator: React.FC = () => {
     const element = document.getElementById('invoice-content');
     if (!element) return;
 
-    // @ts-ignore
-    if (typeof window.html2pdf === 'undefined') {
-        alert('PDF Generation library not ready. Please refresh.');
+    // Check if html2pdf is loaded
+    if (typeof (window as any).html2pdf === 'undefined') {
+        alert('PDF Generation library not ready. Please check your connection.');
         return;
     }
 
@@ -45,13 +57,12 @@ const InvoiceGenerator: React.FC = () => {
       margin: [10, 10], // top/bottom, left/right
       filename: `Rechnung_${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     try {
-        // @ts-ignore
-        await window.html2pdf().set(opt).from(element).save();
+        await (window as any).html2pdf().set(opt).from(element).save();
     } catch (error) {
         console.error('PDF Generation failed', error);
         alert('Fehler beim Erstellen der PDF.');
@@ -72,12 +83,30 @@ const InvoiceGenerator: React.FC = () => {
             {/* Form Section */}
             <div id="invoice-content" className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-8 transition-colors">
                 <div className="flex justify-between items-start mb-8">
-                    <div className="bg-gray-100 dark:bg-slate-800 w-32 h-16 rounded flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">
-                        Logo Upload
+                    <div className="relative group">
+                        {logo ? (
+                            <div className="relative">
+                                <img src={logo} alt="Logo" className="h-16 w-auto object-contain" />
+                                <button 
+                                    onClick={() => setLogo(null)}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                    data-html2canvas-ignore="true"
+                                >
+                                    <X size={12} />
+                                </button>
+                            </div>
+                        ) : (
+                            <label className="cursor-pointer bg-gray-50 dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-slate-700 w-32 h-16 rounded-lg flex flex-col items-center justify-center text-gray-400 dark:text-slate-500 text-xs hover:border-velo-blue dark:hover:border-velo-blue hover:bg-velo-blue/5 transition-all">
+                                <Upload size={16} className="mb-1" />
+                                <span>Logo Upload</span>
+                                <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                            </label>
+                        )}
                     </div>
+                    
                     <div className="text-right">
                         <label className="block text-sm font-medium text-gray-500 dark:text-slate-400 mb-1">Rechnungsnummer</label>
-                        <input type="text" defaultValue="RE-2024-001" className="text-right font-mono border-b border-gray-200 dark:border-slate-700 bg-transparent text-velo-dark dark:text-white focus:border-velo-blue focus:outline-none w-32" />
+                        <input type="text" defaultValue="RE-2024-001" className="text-right font-mono border-b border-gray-200 dark:border-slate-700 bg-transparent text-velo-dark dark:text-white focus:border-velo-blue focus:outline-none w-32 transition-colors" />
                     </div>
                 </div>
 
@@ -85,22 +114,22 @@ const InvoiceGenerator: React.FC = () => {
                     <div>
                         <h3 className="font-bold text-velo-dark dark:text-white mb-4 border-b dark:border-slate-800 pb-2">Absender</h3>
                         <div className="space-y-3">
-                            <input type="text" placeholder="Ihr Firmenname" className="w-full p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue" />
-                            <input type="text" placeholder="Straße Nr." className="w-full p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue" />
+                            <input type="text" placeholder="Ihr Firmenname" className="w-full p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue transition-colors" />
+                            <input type="text" placeholder="Straße Nr." className="w-full p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue transition-colors" />
                             <div className="flex gap-2">
-                                <input type="text" placeholder="PLZ" className="w-1/3 p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue" />
-                                <input type="text" placeholder="Stadt" className="w-2/3 p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue" />
+                                <input type="text" placeholder="PLZ" className="w-1/3 p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue transition-colors" />
+                                <input type="text" placeholder="Stadt" className="w-2/3 p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue transition-colors" />
                             </div>
                         </div>
                     </div>
                     <div>
                         <h3 className="font-bold text-velo-dark dark:text-white mb-4 border-b dark:border-slate-800 pb-2">Empfänger</h3>
                         <div className="space-y-3">
-                            <input type="text" placeholder="Kundenname / Firma" className="w-full p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue" />
-                            <input type="text" placeholder="Straße Nr." className="w-full p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue" />
+                            <input type="text" placeholder="Kundenname / Firma" className="w-full p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue transition-colors" />
+                            <input type="text" placeholder="Straße Nr." className="w-full p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue transition-colors" />
                             <div className="flex gap-2">
-                                <input type="text" placeholder="PLZ" className="w-1/3 p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue" />
-                                <input type="text" placeholder="Stadt" className="w-2/3 p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue" />
+                                <input type="text" placeholder="PLZ" className="w-1/3 p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue transition-colors" />
+                                <input type="text" placeholder="Stadt" className="w-2/3 p-2 border border-gray-200 dark:border-slate-700 bg-transparent dark:text-white rounded text-sm focus:outline-none focus:border-velo-blue transition-colors" />
                             </div>
                         </div>
                     </div>
@@ -117,7 +146,7 @@ const InvoiceGenerator: React.FC = () => {
                     </div>
                     <div className="border border-t-0 border-gray-100 dark:border-slate-800 rounded-b-lg divide-y divide-gray-100 dark:divide-slate-800">
                         {items.map((item) => (
-                            <div key={item.id} className="grid grid-cols-12 gap-4 p-3 items-center hover:bg-gray-50/50 dark:hover:bg-slate-800/50">
+                            <div key={item.id} className="grid grid-cols-12 gap-4 p-3 items-center hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
                                 <div className="col-span-6">
                                     <input 
                                         type="text" 
@@ -149,7 +178,7 @@ const InvoiceGenerator: React.FC = () => {
                                 <div className="col-span-1 text-right">
                                     <button 
                                         onClick={() => removeItem(item.id)} 
-                                        className="text-red-400 hover:text-red-600"
+                                        className="text-red-400 hover:text-red-600 transition-colors"
                                         data-html2canvas-ignore="true" 
                                     >
                                         <Trash2 size={16} />

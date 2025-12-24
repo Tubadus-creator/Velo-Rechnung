@@ -6,6 +6,9 @@ import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import InvoiceGenerator from './pages/InvoiceGenerator';
 import ApiDocs from './pages/ApiDocs';
+import QuotesPage from './pages/QuotesPage';
+import RemindersPage from './pages/RemindersPage';
+import CollectionPage from './pages/CollectionPage';
 import { X } from 'lucide-react';
 
 const ScrollToTop = () => {
@@ -68,6 +71,9 @@ const App: React.FC = () => {
             <Route path="/" element={<LandingPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/rechnung-erstellen" element={<InvoiceGenerator />} />
+            <Route path="/quotes" element={<QuotesPage />} />
+            <Route path="/reminders" element={<RemindersPage />} />
+            <Route path="/collection" element={<CollectionPage />} />
             <Route path="/api-docs" element={<ApiDocs />} />
           </Routes>
         </main>

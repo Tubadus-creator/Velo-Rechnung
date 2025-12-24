@@ -60,13 +60,13 @@ const LandingPage: React.FC = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="relative hidden lg:block"
             >
-              <div className="relative rounded-xl shadow-2xl overflow-hidden border-4 border-white/20 bg-white/5 backdrop-blur-sm">
+              <div className="relative rounded-2xl shadow-2xl overflow-hidden border-4 border-white/20 bg-white/5 backdrop-blur-sm">
                 <img 
-                  src="https://picsum.photos/800/600" 
-                  alt="Velo Rechnungen Dashboard Preview" 
-                  className="w-full h-auto opacity-90"
+                  src="https://images.unsplash.com/photo-1664575602276-acd073f104c1?q=80&w=2340&auto=format&fit=crop" 
+                  alt="Glückliche Freelancerin erledigt Buchhaltung entspannt am Laptop" 
+                  className="w-full h-auto object-cover opacity-95 hover:scale-105 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-velo-blue/40 to-transparent dark:from-slate-900/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-velo-blue/60 to-transparent dark:from-slate-900/80 mix-blend-multiply" />
               </div>
                {/* Floating Badge */}
                <motion.div
@@ -81,7 +81,7 @@ const LandingPage: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-velo-dark dark:text-white">Rechnung bezahlt ✓</p>
-                    <p className="text-sm text-velo-dark/60 dark:text-slate-400">RE-2024-042 • €1.785,00</p>
+                    <p className="text-sm text-velo-dark/60 dark:text-slate-400">"Endlich kein Stress mehr mit der Buchhaltung!"</p>
                   </div>
                 </div>
               </motion.div>
