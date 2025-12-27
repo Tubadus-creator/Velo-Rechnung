@@ -11,6 +11,9 @@ export interface Customer {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  city?: string;
+  contact?: string;
 }
 
 export interface Invoice {

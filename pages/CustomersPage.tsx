@@ -4,14 +4,15 @@ import { Plus, Search, MoreVertical, Phone, Mail, MapPin, Trash2 } from 'lucide-
 import Button from '../components/Button';
 import { useData } from '../context/DataContext';
 import Modal from '../components/Modal';
+import { Customer } from '../types';
 
 const CustomersPage: React.FC = () => {
   const { customers, addCustomer, deleteCustomer } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({
+  const [newCustomer, setNewCustomer] = useState<Omit<Customer, 'id'>>({
     name: '',
-    contact: '', // Added field to UI but mapping to name if not in interface or handle loosely
+    contact: '', 
     email: '',
     phone: '',
     city: ''
@@ -24,13 +25,7 @@ const CustomersPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addCustomer({
-        name: newCustomer.name,
-        email: newCustomer.email,
-        // Using temporary extended fields for the list view, assuming types might need adjustment or we just store them
-        // For strict typing, we might need to update the Customer interface, but here we cast to any for the demo speed
-        ...newCustomer as any 
-    });
+    addCustomer(newCustomer);
     setIsModalOpen(false);
     setNewCustomer({ name: '', contact: '', email: '', phone: '', city: '' });
   };
@@ -77,7 +72,7 @@ const CustomersPage: React.FC = () => {
                             <tr>
                                 <td colSpan={4} className="px-6 py-8 text-center text-gray-500">Keine Kunden gefunden.</td>
                             </tr>
-                        ) : filteredCustomers.map((customer: any) => (
+                        ) : filteredCustomers.map((customer) => (
                             <tr key={customer.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="font-bold text-velo-dark dark:text-white">{customer.name}</div>
@@ -133,7 +128,7 @@ const CustomersPage: React.FC = () => {
                     <input 
                         type="text" 
                         className="w-full p-2 border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                        value={newCustomer.contact}
+                        value={newCustomer.contact || ''}
                         onChange={e => setNewCustomer({...newCustomer, contact: e.target.value})}
                     />
                 </div>
@@ -153,7 +148,7 @@ const CustomersPage: React.FC = () => {
                         <input 
                             type="text" 
                             className="w-full p-2 border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                            value={newCustomer.phone}
+                            value={newCustomer.phone || ''}
                             onChange={e => setNewCustomer({...newCustomer, phone: e.target.value})}
                         />
                     </div>
@@ -163,7 +158,7 @@ const CustomersPage: React.FC = () => {
                     <input 
                         type="text" 
                         className="w-full p-2 border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                        value={newCustomer.city}
+                        value={newCustomer.city || ''}
                         onChange={e => setNewCustomer({...newCustomer, city: e.target.value})}
                     />
                 </div>
