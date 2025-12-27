@@ -25,23 +25,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for token on load
-    const token = localStorage.getItem('velo_token');
-    const storedUser = localStorage.getItem('velo_user');
-    
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const initAuth = () => {
+        try {
+            const token = localStorage.getItem('velo_token');
+            const storedUser = localStorage.getItem('velo_user');
+            
+            if (token && storedUser) {
+                try {
+                    const parsedUser = JSON.parse(storedUser);
+                    if (parsedUser && typeof parsedUser === 'object') {
+                        setUser(parsedUser);
+                    } else {
+                        throw new Error("Invalid user data");
+                    }
+                } catch (parseError) {
+                    console.error("Auth Data Corruption detected, clearing storage.", parseError);
+                    localStorage.removeItem('velo_token');
+                    localStorage.removeItem('velo_user');
+                }
+            }
+        } catch (e) {
+            console.error("Storage access error", e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const response = await api.auth.login(email, password);
-      // Assuming response structure: { token: '...', user: { ... } }
-      // Adjust based on your actual n8n response
-      const userData = response.user || { email, id: '1' }; 
+      
+      // Fallback if API returns unstructured data, adjust based on real N8N output
+      const userData = response.user || { email, id: '1', name: 'User' }; 
       const token = response.token || 'mock-token';
 
       localStorage.setItem('velo_token', token);
@@ -59,7 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       await api.auth.register(data);
-      // Auto login or redirect handled by component
     } catch (error) {
       console.error("Registration Error", error);
       throw error;
@@ -72,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('velo_token');
     localStorage.removeItem('velo_user');
     setUser(null);
-    window.location.href = '/'; // Hard redirect to home
+    window.location.href = '/'; 
   };
 
   return (

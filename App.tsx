@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { X, ChevronDown, ChevronUp, Check, Shield } from 'lucide-react';
@@ -18,6 +19,7 @@ import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import { DataProvider } from './context/DataContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -52,16 +54,20 @@ const defaultPreferences: CookiePreferences = {
 
 // Helper to update GA consent based on specific preferences
 const updateGtagConsent = (prefs: CookiePreferences) => {
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('consent', 'update', {
-      'analytics_storage': prefs.analytics ? 'granted' : 'denied',
-      'ad_storage': prefs.marketing ? 'granted' : 'denied',
-      'ad_user_data': prefs.marketing ? 'granted' : 'denied',
-      'ad_personalization': prefs.marketing ? 'granted' : 'denied',
-      'personalization_storage': prefs.necessary ? 'granted' : 'granted', // Usually strictly necessary
-      'functionality_storage': prefs.necessary ? 'granted' : 'granted',
-      'security_storage': 'granted',
-    });
+  try {
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('consent', 'update', {
+          'analytics_storage': prefs.analytics ? 'granted' : 'denied',
+          'ad_storage': prefs.marketing ? 'granted' : 'denied',
+          'ad_user_data': prefs.marketing ? 'granted' : 'denied',
+          'ad_personalization': prefs.marketing ? 'granted' : 'denied',
+          'personalization_storage': prefs.necessary ? 'granted' : 'granted', // Usually strictly necessary
+          'functionality_storage': prefs.necessary ? 'granted' : 'granted',
+          'security_storage': 'granted',
+        });
+      }
+  } catch(e) {
+      console.warn("Gtag update failed", e);
   }
 };
 
@@ -210,8 +216,13 @@ const CookieConsent = () => {
       const timer = setTimeout(() => setIsOpen(true), 1500);
       return () => clearTimeout(timer);
     } else {
-      const prefs = JSON.parse(consent);
-      updateGtagConsent(prefs);
+        try {
+            const prefs = JSON.parse(consent);
+            updateGtagConsent(prefs);
+        } catch (e) {
+            console.warn("Cookie preference corruption detected. Resetting.");
+            localStorage.removeItem('velo_cookie_consent');
+        }
     }
 
     const handleOpen = () => setIsOpen(true);
@@ -248,29 +259,31 @@ const Layout = ({ children, hideHeader = false }: { children?: React.ReactNode, 
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <DataProvider>
-        <HashRouter>
-          <Routes>
-            <Route path="/" element={<Layout><LandingPage /></Layout>} />
-            <Route path="/login" element={<Layout hideHeader><LoginPage /></Layout>} />
-            <Route path="/rechnung-erstellen" element={<Layout><InvoiceGenerator /></Layout>} />
-            
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
-            <Route path="/quotes" element={<ProtectedRoute><Layout><QuotesPage /></Layout></ProtectedRoute>} />
-            <Route path="/reminders" element={<ProtectedRoute><Layout><RemindersPage /></Layout></ProtectedRoute>} />
-            <Route path="/collection" element={<ProtectedRoute><Layout><CollectionPage /></Layout></ProtectedRoute>} />
-            <Route path="/customers" element={<ProtectedRoute><Layout><CustomersPage /></Layout></ProtectedRoute>} />
-            <Route path="/suppliers" element={<ProtectedRoute><Layout><SuppliersPage /></Layout></ProtectedRoute>} />
-            <Route path="/products" element={<ProtectedRoute><Layout><ProductsPage /></Layout></ProtectedRoute>} />
-            <Route path="/documents" element={<ProtectedRoute><Layout><DocumentsPage /></Layout></ProtectedRoute>} />
-            <Route path="/tasks" element={<ProtectedRoute><Layout><TasksPage /></Layout></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
-          </Routes>
-        </HashRouter>
-      </DataProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+        <AuthProvider>
+            <DataProvider>
+                <HashRouter>
+                <Routes>
+                    <Route path="/" element={<Layout><LandingPage /></Layout>} />
+                    <Route path="/login" element={<Layout hideHeader><LoginPage /></Layout>} />
+                    <Route path="/rechnung-erstellen" element={<Layout><InvoiceGenerator /></Layout>} />
+                    
+                    {/* Protected Routes */}
+                    <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+                    <Route path="/quotes" element={<ProtectedRoute><Layout><QuotesPage /></Layout></ProtectedRoute>} />
+                    <Route path="/reminders" element={<ProtectedRoute><Layout><RemindersPage /></Layout></ProtectedRoute>} />
+                    <Route path="/collection" element={<ProtectedRoute><Layout><CollectionPage /></Layout></ProtectedRoute>} />
+                    <Route path="/customers" element={<ProtectedRoute><Layout><CustomersPage /></Layout></ProtectedRoute>} />
+                    <Route path="/suppliers" element={<ProtectedRoute><Layout><SuppliersPage /></Layout></ProtectedRoute>} />
+                    <Route path="/products" element={<ProtectedRoute><Layout><ProductsPage /></Layout></ProtectedRoute>} />
+                    <Route path="/documents" element={<ProtectedRoute><Layout><DocumentsPage /></Layout></ProtectedRoute>} />
+                    <Route path="/tasks" element={<ProtectedRoute><Layout><TasksPage /></Layout></ProtectedRoute>} />
+                    <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
+                </Routes>
+                </HashRouter>
+            </DataProvider>
+        </AuthProvider>
+    </ErrorBoundary>
   );
 };
 
