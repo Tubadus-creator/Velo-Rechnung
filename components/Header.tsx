@@ -1,10 +1,13 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Sun, Moon, ChevronDown } from 'lucide-react';
+import { Menu, X, Sun, Moon, ChevronDown, Settings, LogOut } from 'lucide-react';
 import Button from './Button';
 import { Logo } from './Logo';
+import { useAuth } from '../context/AuthContext';
 
 const Header: React.FC = () => {
+  const { isAuthenticated, logout, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -13,13 +16,13 @@ const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isDashboard = location.pathname !== '/' && !location.pathname.startsWith('/#');
+  // If user is authenticated, we consider them in "App Mode", otherwise "Marketing Mode"
+  const isAppMode = isAuthenticated;
 
   // Navigation Data Structure
   const marketingNavItems = [
     { label: 'Funktionen', href: '/#features' },
     { label: 'Preise', href: '/#pricing' },
-    { label: 'API Docs', href: '/api-docs' },
   ];
 
   const appNavItems = [
@@ -62,7 +65,7 @@ const Header: React.FC = () => {
     },
   ];
 
-  const currentNavItems = isDashboard ? appNavItems : marketingNavItems;
+  const currentNavItems = isAppMode ? appNavItems : marketingNavItems;
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('velo-theme') as 'light' | 'dark' | null;
@@ -193,9 +196,9 @@ const Header: React.FC = () => {
              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
            </button>
            
-           {!isDashboard ? (
+           {!isAuthenticated ? (
              <>
-                <Link to="/dashboard">
+                <Link to="/login">
                   <Button variant="ghost" size="sm">Login</Button>
                 </Link>
                 <Link to="/rechnung-erstellen">
@@ -203,8 +206,20 @@ const Header: React.FC = () => {
                 </Link>
              </>
            ) : (
-             <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-velo-blue text-white flex items-center justify-center text-sm font-bold">V</div>
+             <div className="flex items-center gap-3">
+                <Link to="/settings" className="p-2 text-velo-dark dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors" title="Einstellungen">
+                    <Settings size={20} />
+                </Link>
+                <button 
+                    onClick={logout}
+                    className="p-2 text-velo-dark dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 rounded-full transition-colors"
+                    title="Abmelden"
+                >
+                    <LogOut size={20} />
+                </button>
+                <div className="w-8 h-8 rounded-full bg-velo-blue text-white flex items-center justify-center text-sm font-bold cursor-default" title={user?.email}>
+                    {user?.email?.charAt(0).toUpperCase() || 'V'}
+                </div>
              </div>
            )}
         </div>
@@ -275,14 +290,25 @@ const Header: React.FC = () => {
           
           <div className="h-px bg-gray-100 dark:bg-slate-800 my-2" />
           
-          {!isDashboard && (
+          {!isAuthenticated ? (
             <>
-              <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+              <Link to="/login" onClick={() => setIsOpen(false)}>
                 <Button variant="ghost" fullWidth>Login</Button>
               </Link>
               <Link to="/rechnung-erstellen" onClick={() => setIsOpen(false)}>
                 <Button variant="secondary" fullWidth>Kostenlos testen</Button>
               </Link>
+            </>
+          ) : (
+            <>
+                <Link to="/settings" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" fullWidth>
+                        <Settings className="w-4 h-4 mr-2" /> Einstellungen
+                    </Button>
+                </Link>
+                <Button variant="ghost" fullWidth onClick={logout} className="text-red-600 hover:bg-red-50">
+                    <LogOut className="w-4 h-4 mr-2" /> Abmelden
+                </Button>
             </>
           )}
         </div>

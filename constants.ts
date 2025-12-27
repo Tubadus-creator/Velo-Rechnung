@@ -1,65 +1,63 @@
-import { PricingPlan, Invoice, Quote, Reminder, CollectionCase } from './types';
+
+import { PricingPlan, Invoice, Quote, Reminder, CollectionCase, Supplier, Customer } from './types';
 
 export const PLANS: PricingPlan[] = [
   {
-    name: "Free",
+    name: "FREE",
     price: "0€",
-    description: "Perfekt zum Testen",
+    description: "Für den Start",
     features: [
-      { text: "Unbegrenzt Rechnungen erstellen", included: true },
+      { text: "Unbegrenzt Rechnungen & Angebote", included: true },
       { text: "PDF-Download", included: true },
-      { text: "Ohne Wasserzeichen", included: false },
-      { text: "Zahlungsabgleich", included: false },
-      { text: "Kundenmanagement", included: false },
-      { text: "API-Zugang", included: false },
+      { text: "Mit Wasserzeichen", included: true, badge: "Powered by Velo" },
+      { text: "Keine Kundenverwaltung", included: false },
+      { text: "Kein E-Mail-Versand", included: false },
+      { text: "Kein Banking-Abgleich", included: false },
     ],
-    cta: "Jetzt starten",
+    cta: "Kostenlos starten",
     highlighted: false
   },
   {
-    name: "Professional",
-    price: "9,99€",
+    name: "STARTER",
+    price: "6,99€",
     period: "/Monat",
-    description: "Für Freelancer & Kleinunternehmen",
+    description: "Für Nebengewerbe & Gründer",
     features: [
-      { text: "Alles aus Free", included: true },
       { text: "Ohne Wasserzeichen", included: true },
+      { text: "Kundenmanagement", included: true },
+      { text: "Lieferanten (max. 10)", included: true },
       { text: "1 Bankkonto inklusive", included: true },
-      { text: "Automatischer Zahlungsabgleich", included: true },
-      { text: "Kundenmanagement & Archiv", included: true },
-      { text: "Mahnwesen (3-Stufen)", included: true },
-      { text: "E-Mail-Versand", included: true },
-      { text: "DATEV/CSV Export", included: true },
-      { text: "API-Zugang (500 Requests/Monat)", included: true, badge: "Für Automatisierungen" },
-      { text: "Weitere Konten: +€1,99/Monat", included: true, muted: true },
+      { text: "50 E-Mails/Monat", included: true },
+      { text: "E-Rechnung / XRechnung", included: true, badge: "Ab 2025 Pflicht" },
+      { text: "Mahnwesen (manuell)", included: true },
+      { text: "Automatischer Zahlungsabgleich", included: false },
     ],
     cta: "Jetzt upgraden",
     highlighted: true,
-    badge: "Beliebtester Plan"
+    badge: "Bestseller"
   },
   {
-    name: "Whitelabel",
-    price: "49€",
+    name: "PROFESSIONAL",
+    price: "14,99€",
     period: "/Monat",
-    description: "Für Steuerberater & Agenturen",
+    description: "Für wachsende Unternehmen",
     features: [
-      { text: "Alles aus Professional", included: true },
+      { text: "Alles aus STARTER", included: true },
+      { text: "Unbegrenzt Lieferanten", included: true },
       { text: "3 Bankkonten inklusive", included: true },
-      { text: "Komplett eigenes Branding", included: true },
-      { text: "Subdomain: kunde.ihredomain.de", included: true },
-      { text: "Multi-Mandanten (unbegrenzt)", included: true },
-      { text: "API-Zugang (Unlimited)", included: true, badge: "Unbegrenzt" },
+      { text: "Unbegrenzt E-Mails", included: true },
+      { text: "Automatisches Mahnwesen", included: true },
+      { text: "Inkasso-Integration", included: true },
+      { text: "Automatischer Zahlungsabgleich", included: true },
       { text: "Priority Support (24h)", included: true },
-      { text: "Partnerprovision", included: true },
-      { text: "Weitere Konten: +€1,99/Monat", included: true, muted: true },
     ],
-    cta: "Kontakt aufnehmen",
+    cta: "Jetzt upgraden",
     highlighted: false
   }
 ];
 
 export const MOCK_INVOICES: Invoice[] = [
-  { id: '1', number: 'RE-2024-001', customerName: 'Müller GmbH', date: '2024-05-01', dueDate: '2024-05-15', total: 1250.00, status: 'paid', items: [] },
+  { id: '1', number: 'RE-2024-001', customerName: 'Müller GmbH', date: '2024-05-01', dueDate: '2024-05-15', total: 1250.00, status: 'paid', items: [], isLocked: true, lockedAt: '2024-05-02T10:00:00' },
   { id: '2', number: 'RE-2024-002', customerName: 'StartUp Inc.', date: '2024-05-10', dueDate: '2024-05-24', total: 3400.50, status: 'sent', items: [] },
   { id: '3', number: 'RE-2024-003', customerName: 'Hans Meier', date: '2024-05-12', dueDate: '2024-05-26', total: 150.00, status: 'reminded_1', reminderCount: 1, items: [] },
   { id: '4', number: 'RE-2024-004', customerName: 'Design Studio', date: '2024-05-20', dueDate: '2024-06-03', total: 890.00, status: 'reminded_2', reminderCount: 2, items: [] },
@@ -79,6 +77,20 @@ export const MOCK_REMINDERS: Reminder[] = [
 
 export const MOCK_COLLECTIONS: CollectionCase[] = [
   { id: '1', externalCaseId: 'PAIR-99283', invoiceId: '5', invoiceNumber: 'RE-2024-005', customerName: 'Tech Solutions', submissionDate: '2024-05-15', totalAmount: 2100.00, status: 'in_progress', lastUpdate: '2024-06-01' }
+];
+
+export const MOCK_CUSTOMERS: Customer[] = [
+  { id: '1', name: 'Müller GmbH', email: 'buchhaltung@mueller-gmbh.de' },
+  { id: '2', name: 'StartUp Inc.', email: 'billing@startup-inc.com' },
+  { id: '3', name: 'Hans Meier', email: 'hans.meier@email.de' },
+  { id: '4', name: 'Design Studio', email: 'finance@designstudio.net' },
+  { id: '5', name: 'Tech Solutions', email: 'payments@techsolutions.io' }
+];
+
+export const MOCK_SUPPLIERS: Supplier[] = [
+    { id: 1, name: 'Bürobedarf 24', category: 'office', email: 'service@buero24.de', phone: '+49 89 112233', status: 'active', iban: 'DE12 3456 7890 1234 56', bankName: 'Volksbank' },
+    { id: 2, name: 'Hosting Provider KG', category: 'it', email: 'support@hosting-kg.de', phone: '+49 69 445566', status: 'active', iban: 'DE99 8765 4321 0987 65', bankName: 'Sparkasse' },
+    { id: 3, name: 'Reinigungsdienst Blitz', category: 'other', email: 'info@blitz-clean.de', phone: '+49 221 778899', status: 'inactive' },
 ];
 
 export const CHART_DATA = [

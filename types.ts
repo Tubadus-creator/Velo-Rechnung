@@ -1,3 +1,4 @@
+
 export interface InvoiceItem {
   id: string;
   description: string;
@@ -22,6 +23,8 @@ export interface Invoice {
   status: 'draft' | 'open' | 'paid' | 'overdue' | 'reminded_1' | 'reminded_2' | 'reminded_3' | 'in_collection' | 'sent';
   total: number;
   reminderCount?: number;
+  isLocked?: boolean;
+  lockedAt?: string;
 }
 
 export interface Quote {
@@ -62,6 +65,19 @@ export interface CollectionCase {
   lastUpdate: string;
 }
 
+export interface Supplier {
+  id: number;
+  name: string;
+  category: 'office' | 'it' | 'craft' | 'consulting' | 'other';
+  email: string;
+  phone: string;
+  status: 'active' | 'inactive';
+  iban?: string;
+  bic?: string;
+  bankName?: string;
+  taxNumber?: string;
+}
+
 export interface PlanFeature {
   text: string;
   included: boolean;
@@ -83,4 +99,16 @@ export interface PricingPlan {
 export interface NavItem {
   label: string;
   href: string;
+  type?: 'link' | 'dropdown';
+  id?: string;
+  children?: { label: string; href: string }[];
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: 'create' | 'update' | 'delete' | 'lock' | 'export';
+  entity: string;
+  entityId: string;
+  timestamp: string;
+  details: string;
 }

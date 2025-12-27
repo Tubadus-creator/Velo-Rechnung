@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Twitter, Linkedin, Github, X, Shield, FileText, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -171,7 +172,6 @@ const Footer: React.FC = () => {
                          document.getElementById('pricing')?.scrollIntoView({behavior: 'smooth'});
                     }}>Preise</a>
                 </li>
-                <li><Link to="/api-docs" className="hover:text-white transition-colors">API Dokumentation</Link></li>
                 <li><Link to="/dashboard" className="hover:text-white transition-colors">Changelog</Link></li>
               </ul>
             </div>

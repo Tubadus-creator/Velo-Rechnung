@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { X, ChevronDown, ChevronUp, Check, Shield } from 'lucide-react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import InvoiceGenerator from './pages/InvoiceGenerator';
-import ApiDocs from './pages/ApiDocs';
 import QuotesPage from './pages/QuotesPage';
 import RemindersPage from './pages/RemindersPage';
 import CollectionPage from './pages/CollectionPage';
@@ -15,6 +14,10 @@ import SuppliersPage from './pages/SuppliersPage';
 import ProductsPage from './pages/ProductsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import TasksPage from './pages/TasksPage';
+import SettingsPage from './pages/SettingsPage';
+import LoginPage from './pages/LoginPage';
+import { DataProvider } from './context/DataContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -23,6 +26,15 @@ const ScrollToTop = () => {
   }, [pathname]);
   return null;
 };
+
+// --- Protected Route Wrapper ---
+const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
+    const { isAuthenticated, isLoading } = useAuth();
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center">Laden...</div>;
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    return <>{children}</>;
+};
+
 
 // --- Cookie Types & Helpers ---
 
@@ -189,138 +201,76 @@ const CookieSettingsModal = ({
   );
 };
 
-
-// --- Main Cookie Banner Component ---
-
 const CookieConsent = () => {
-  const [showBanner, setShowBanner] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem('cookie-preferences');
+    const consent = localStorage.getItem('velo_cookie_consent');
     if (!consent) {
-        setShowBanner(true);
+      const timer = setTimeout(() => setIsOpen(true), 1500);
+      return () => clearTimeout(timer);
     } else {
-        // Apply saved preferences on load
-        try {
-            const parsedPrefs = JSON.parse(consent);
-            updateGtagConsent(parsedPrefs);
-        } catch (e) {
-            setShowBanner(true);
-        }
+      const prefs = JSON.parse(consent);
+      updateGtagConsent(prefs);
     }
 
-    // Listen for custom event from Footer
-    const openSettingsHandler = () => setShowSettings(true);
-    window.addEventListener('open-cookie-settings', openSettingsHandler);
-    
-    return () => {
-        window.removeEventListener('open-cookie-settings', openSettingsHandler);
-    };
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener('open-cookie-settings', handleOpen);
+    return () => window.removeEventListener('open-cookie-settings', handleOpen);
   }, []);
 
   const handleSave = (prefs: CookiePreferences) => {
-    localStorage.setItem('cookie-preferences', JSON.stringify(prefs));
-    // Legacy support
-    localStorage.setItem('cookie-consent', prefs.analytics ? 'all' : 'necessary'); 
-    
+    localStorage.setItem('velo_cookie_consent', JSON.stringify(prefs));
     updateGtagConsent(prefs);
-    setShowBanner(false);
-    setShowSettings(false);
-  };
-
-  const acceptAll = () => {
-    handleSave({ necessary: true, analytics: true, marketing: true });
-  };
-
-  const rejectAll = () => {
-    handleSave({ necessary: true, analytics: false, marketing: false });
+    setIsOpen(false);
   };
 
   return (
-    <>
-      <CookieSettingsModal 
-        isOpen={showSettings} 
-        onClose={() => setShowSettings(false)} 
+    <CookieSettingsModal 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)} 
         onSave={handleSave} 
-      />
-
-      {showBanner && !showSettings && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 p-4 md:p-6 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] animate-slide-up">
-            <div className="container mx-auto max-w-6xl flex flex-col lg:flex-row items-center justify-between gap-6">
-                <div className="flex-1">
-                    <h3 className="font-bold text-base mb-2 text-velo-dark dark:text-white">Privatsphäre-Einstellungen</h3>
-                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed mb-3 md:mb-0">
-                        Wir verwenden Cookies und ähnliche Technologien, um unsere Website für Sie zu optimieren. 
-                        Einige sind essenziell, andere helfen uns, die Nutzung unserer Seite zu analysieren. 
-                        Ihre Daten bleiben sicher auf deutschen Servern.
-                        <br className="hidden md:block"/>
-                        <span className="inline-block mt-2 text-xs">
-                            <a href="#" className="underline hover:text-velo-blue dark:hover:text-velo-orange mr-4">Datenschutzerklärung</a>
-                            <a href="#" className="underline hover:text-velo-blue dark:hover:text-velo-orange">Impressum</a>
-                        </span>
-                    </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto shrink-0">
-                    <button 
-                        onClick={rejectAll}
-                        className="flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-sm font-medium border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                    >
-                        Ablehnen
-                    </button>
-                    <button 
-                        onClick={() => setShowSettings(true)}
-                        className="hidden sm:block flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium border border-transparent text-gray-500 dark:text-slate-400 hover:text-velo-dark dark:hover:text-white hover:underline transition-colors"
-                    >
-                        Einstellungen
-                    </button>
-                    <button 
-                        onClick={acceptAll} 
-                        className="flex-1 sm:flex-none bg-velo-blue hover:bg-velo-blue/90 text-white px-8 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm"
-                    >
-                        Alle akzeptieren
-                    </button>
-                </div>
-                {/* Mobile Settings Link */}
-                <button 
-                    onClick={() => setShowSettings(true)}
-                    className="sm:hidden w-full text-center text-sm text-gray-500 underline py-2"
-                >
-                    Einstellungen verwalten
-                </button>
-            </div>
-        </div>
-      )}
-    </>
+    />
   );
 };
 
+const Layout = ({ children, hideHeader = false }: { children?: React.ReactNode, hideHeader?: boolean }) => (
+    <div className="flex flex-col min-h-screen">
+        <ScrollToTop />
+        {!hideHeader && <Header />}
+        <main className="flex-grow">
+            {children}
+        </main>
+        {!hideHeader && <Footer />}
+        <CookieConsent />
+    </div>
+);
+
 const App: React.FC = () => {
   return (
-    <HashRouter>
-      <div className="flex flex-col min-h-screen">
-        <ScrollToTop />
-        <Header />
-        <main className="flex-grow">
+    <AuthProvider>
+      <DataProvider>
+        <HashRouter>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/rechnung-erstellen" element={<InvoiceGenerator />} />
-            <Route path="/quotes" element={<QuotesPage />} />
-            <Route path="/reminders" element={<RemindersPage />} />
-            <Route path="/collection" element={<CollectionPage />} />
-            <Route path="/api-docs" element={<ApiDocs />} />
-            <Route path="/customers" element={<CustomersPage />} />
-            <Route path="/suppliers" element={<SuppliersPage />} />
-            <Route path="/products" element={<ProductsPage />} />
-            <Route path="/documents" element={<DocumentsPage />} />
-            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/" element={<Layout><LandingPage /></Layout>} />
+            <Route path="/login" element={<Layout hideHeader><LoginPage /></Layout>} />
+            <Route path="/rechnung-erstellen" element={<Layout><InvoiceGenerator /></Layout>} />
+            
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+            <Route path="/quotes" element={<ProtectedRoute><Layout><QuotesPage /></Layout></ProtectedRoute>} />
+            <Route path="/reminders" element={<ProtectedRoute><Layout><RemindersPage /></Layout></ProtectedRoute>} />
+            <Route path="/collection" element={<ProtectedRoute><Layout><CollectionPage /></Layout></ProtectedRoute>} />
+            <Route path="/customers" element={<ProtectedRoute><Layout><CustomersPage /></Layout></ProtectedRoute>} />
+            <Route path="/suppliers" element={<ProtectedRoute><Layout><SuppliersPage /></Layout></ProtectedRoute>} />
+            <Route path="/products" element={<ProtectedRoute><Layout><ProductsPage /></Layout></ProtectedRoute>} />
+            <Route path="/documents" element={<ProtectedRoute><Layout><DocumentsPage /></Layout></ProtectedRoute>} />
+            <Route path="/tasks" element={<ProtectedRoute><Layout><TasksPage /></Layout></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
           </Routes>
-        </main>
-        <Footer />
-        <CookieConsent />
-      </div>
-    </HashRouter>
+        </HashRouter>
+      </DataProvider>
+    </AuthProvider>
   );
 };
 

@@ -15,7 +15,6 @@ const LandingPage: React.FC = () => {
 
     setStatus('loading');
     
-    // Try to send to webhook, fall back to mock success for demo/CORS issues
     try {
         const response = await fetch('https://n8n.velo-automation.de/webhook/newsletter-signup', {
             method: 'POST',
@@ -27,20 +26,12 @@ const LandingPage: React.FC = () => {
             setStatus('success');
             setEmail('');
         } else {
-            // If server returns error, we still show success in this demo
-            console.warn('Webhook returned error status, simulating success for demo');
-            setStatus('success');
-            setEmail('');
+            console.error('Newsletter signup failed with status:', response.status);
+            setStatus('error');
         }
     } catch (error) {
-        // Network error (e.g. CORS or offline)
-        console.warn('Webhook fetch failed, simulating success for demo:', error);
-        
-        // Simulate network delay then show success
-        setTimeout(() => {
-            setStatus('success');
-            setEmail('');
-        }, 800);
+        console.error('Newsletter signup network error (likely CORS if local):', error);
+        setStatus('error');
     }
   };
 

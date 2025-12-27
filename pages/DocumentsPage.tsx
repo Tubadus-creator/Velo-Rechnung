@@ -1,13 +1,28 @@
-import React from 'react';
+
+import React, { useRef } from 'react';
 import { Upload, FileText, Download, Trash2, Search, Filter } from 'lucide-react';
 import Button from '../components/Button';
+import { useData } from '../context/DataContext';
 
 const DocumentsPage: React.FC = () => {
-  const MOCK_DOCS = [
-    { id: 1, name: 'Tankbeleg Shell.pdf', date: '2024-05-20', size: '1.2 MB', category: 'Reisekosten' },
-    { id: 2, name: 'Rechnung Hosting.pdf', date: '2024-05-01', size: '0.8 MB', category: 'IT-Kosten' },
-    { id: 3, name: 'Büromaterial Amazon.pdf', date: '2024-04-15', size: '2.4 MB', category: 'Bürobedarf' },
-  ];
+  const { documents, addDocument, deleteDocument } = useData();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Simulate upload
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      addDocument({
+        name: file.name,
+        date: new Date().toISOString().split('T')[0],
+        size: `${fileSizeMB} MB`,
+        category: 'Posteingang' // Default category
+      });
+    }
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   return (
     <div className="min-h-screen bg-velo-light dark:bg-slate-950 pt-24 pb-12 transition-colors duration-300">
@@ -17,13 +32,23 @@ const DocumentsPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-velo-dark dark:text-white">Belege & Dokumente</h1>
             <p className="text-velo-dark/60 dark:text-slate-400">Archivieren Sie Ihre Eingangsrechnungen und Belege revisionssicher.</p>
           </div>
-          <Button className="bg-velo-blue hover:bg-velo-blue/90">
+          <Button className="bg-velo-blue hover:bg-velo-blue/90" onClick={() => fileInputRef.current?.click()}>
             <Upload className="mr-2 h-4 w-4" /> Beleg hochladen
           </Button>
+          <input 
+             type="file" 
+             ref={fileInputRef} 
+             className="hidden" 
+             accept=".pdf,.jpg,.png,.jpeg"
+             onChange={handleFileChange} 
+          />
         </div>
 
         {/* Upload Area */}
-        <div className="mb-8 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-xl p-8 text-center bg-gray-50 dark:bg-slate-900/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
+        <div 
+            onClick={() => fileInputRef.current?.click()}
+            className="mb-8 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-xl p-8 text-center bg-gray-50 dark:bg-slate-900/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer group"
+        >
             <div className="bg-white dark:bg-slate-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm group-hover:scale-110 transition-transform">
                 <Upload className="text-velo-blue w-8 h-8" />
             </div>
@@ -59,7 +84,9 @@ const DocumentsPage: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-                        {MOCK_DOCS.map((doc) => (
+                        {documents.length === 0 ? (
+                            <tr><td colSpan={5} className="text-center py-8 text-gray-500">Keine Dokumente vorhanden.</td></tr>
+                        ) : documents.map((doc) => (
                             <tr key={doc.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
@@ -81,7 +108,10 @@ const DocumentsPage: React.FC = () => {
                                         <button className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full text-gray-500 transition-colors">
                                             <Download size={16} />
                                         </button>
-                                        <button className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 rounded-full text-gray-500 transition-colors">
+                                        <button 
+                                            onClick={() => deleteDocument(doc.id)}
+                                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 rounded-full text-gray-500 transition-colors"
+                                        >
                                             <Trash2 size={16} />
                                         </button>
                                     </div>

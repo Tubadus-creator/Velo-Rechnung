@@ -1,6 +1,8 @@
+
 import React, { useState, useRef } from 'react';
-import { Plus, Trash2, Download, X, Upload } from 'lucide-react';
+import { Plus, Trash2, Download, X, Upload, Lock, AlertCircle, Edit, XCircle } from 'lucide-react';
 import Button from '../components/Button';
+import { Link } from 'react-router-dom';
 
 interface Item {
     id: number;
@@ -16,13 +18,18 @@ interface Address {
     city: string;
 }
 
+// --- Mock User Plan for Demo ---
+// Change to 'starter' or 'professional' to remove watermark
+const USER_PLAN = 'free'; 
+
 // --- Invoice Template Component (Visual for PDF & Preview) ---
 const InvoiceTemplate = React.forwardRef<HTMLDivElement, {
     data: any,
     items: Item[],
     logo: string | null,
-    totals: { subtotal: number, tax: number, total: number }
-}>(({ data, items, logo, totals }, ref) => {
+    totals: { subtotal: number, tax: number, total: number },
+    plan: string
+}>(({ data, items, logo, totals, plan }, ref) => {
     return (
         <div 
             ref={ref} 
@@ -120,8 +127,15 @@ const InvoiceTemplate = React.forwardRef<HTMLDivElement, {
                 </div>
             </div>
             
-             {/* Footer - Empty in Free Version */}
-             <div className="absolute bottom-[15mm] left-[15mm] right-[15mm] text-center text-xs text-black border-t border-gray-300 pt-4"></div>
+             {/* Footer - Watermark for Free Plan */}
+             <div className="absolute bottom-[15mm] left-[15mm] right-[15mm] text-center border-t border-gray-300 pt-4 flex flex-col items-center justify-center">
+                {plan === 'free' && (
+                    <div className="text-xs text-gray-400 mt-2 font-medium uppercase tracking-widest flex items-center gap-2">
+                        <span>Erstellt mit</span>
+                        <span className="font-bold text-velo-blue/60">Velo Rechnungen</span>
+                    </div>
+                )}
+             </div>
         </div>
     );
 });
@@ -132,6 +146,7 @@ const InvoiceGenerator: React.FC = () => {
   const [items, setItems] = useState<Item[]>([{ id: 1, desc: '', qty: 1, price: 0 }]);
   const [logo, setLogo] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLocked, setIsLocked] = useState(false); // Simulate GoBD lock for demo
   
   const [invoiceData, setInvoiceData] = useState({
       number: 'RE-2024-001',
@@ -145,6 +160,7 @@ const InvoiceGenerator: React.FC = () => {
 
   // Handlers
   const updateField = (section: 'sender' | 'recipient' | 'root', field: string, value: string) => {
+      if (isLocked) return;
       if (section === 'root') {
           setInvoiceData(prev => ({ ...prev, [field]: value }));
       } else {
@@ -156,18 +172,22 @@ const InvoiceGenerator: React.FC = () => {
   };
 
   const addItem = () => {
+    if (isLocked) return;
     setItems([...items, { id: Date.now(), desc: '', qty: 1, price: 0 }]);
   };
 
   const removeItem = (id: number) => {
+    if (isLocked) return;
     setItems(items.filter(i => i.id !== id));
   };
 
   const updateItem = (id: number, field: keyof Item, value: string | number) => {
+    if (isLocked) return;
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isLocked) return;
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -221,13 +241,31 @@ const InvoiceGenerator: React.FC = () => {
         
         {/* Hidden Template for PDF Generation (Absolute position off-screen) */}
         <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
-            <InvoiceTemplate ref={templateRef} data={invoiceData} items={items} logo={logo} totals={totals} />
+            <InvoiceTemplate ref={templateRef} data={invoiceData} items={items} logo={logo} totals={totals} plan={USER_PLAN} />
         </div>
 
         <div className="text-center mb-10">
             <h1 className="text-3xl font-bold text-velo-dark dark:text-white mb-2">Kostenloser Rechnungs-Generator</h1>
             <p className="text-velo-dark/60 dark:text-slate-400">Erstellen Sie professionelle Rechnungen ohne Anmeldung.</p>
         </div>
+
+        {/* GoBD Lock Alert Simulation */}
+        {isLocked && (
+            <div className="max-w-4xl mx-auto mb-8 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 flex items-start gap-4">
+                <Lock className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
+                <div>
+                    <h3 className="font-bold text-orange-900 dark:text-orange-200">Dokument gesperrt (GoBD)</h3>
+                    <p className="text-sm text-orange-800 dark:text-orange-300 mt-1">
+                        Dieses Dokument wurde finalisiert und kann nicht mehr bearbeitet werden, um die Unveränderbarkeit gemäß GoBD zu gewährleisten.
+                    </p>
+                    <div className="mt-3">
+                         <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50 p-0 h-auto">
+                            <XCircle className="w-4 h-4 mr-1" /> Storno-Rechnung erstellen
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        )}
 
         {/* Main Grid: Generator (Left) | Preview (Right) */}
         <div className="grid xl:grid-cols-2 gap-8 items-start">
@@ -243,13 +281,15 @@ const InvoiceGenerator: React.FC = () => {
                             Rechnungen automatisch erstellen und Zahlungen abgleichen.
                         </p>
                     </div>
-                    <Button className="bg-velo-orange hover:bg-velo-orange/90 text-white border-none shrink-0 w-full sm:w-auto">
-                        Jetzt upgraden
-                    </Button>
+                    <Link to="/settings">
+                        <Button className="bg-velo-orange hover:bg-velo-orange/90 text-white border-none shrink-0 w-full sm:w-auto">
+                            Jetzt upgraden
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Form Section */}
-                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-8 transition-colors">
+                <div className={`bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-8 transition-colors ${isLocked ? 'opacity-70 pointer-events-none grayscale-[0.5]' : ''}`}>
                     
                     {/* Header Inputs */}
                     <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-6">
@@ -460,7 +500,19 @@ const InvoiceGenerator: React.FC = () => {
             {/* RIGHT COLUMN: Actions & Live Preview */}
             <div className="space-y-4 order-1 xl:order-2 xl:sticky xl:top-24">
                 {/* Actions Bar */}
-                <div className="flex justify-end bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800">
+                <div className="flex flex-col gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800">
+                     <div className="flex items-center gap-2 mb-2">
+                        <input 
+                            type="checkbox" 
+                            id="simulateLock" 
+                            checked={isLocked}
+                            onChange={() => setIsLocked(!isLocked)}
+                            className="w-4 h-4 text-velo-blue rounded focus:ring-velo-blue"
+                        />
+                        <label htmlFor="simulateLock" className="text-sm font-medium text-gray-700 dark:text-slate-300">
+                            GoBD-Sperre simulieren (Demo)
+                        </label>
+                     </div>
                      <Button 
                         className="bg-velo-blue hover:bg-velo-blue/90" 
                         onClick={handleDownload}
@@ -478,7 +530,7 @@ const InvoiceGenerator: React.FC = () => {
                 {/* Live Preview Container */}
                 <div className="bg-gray-200 dark:bg-gray-800 p-6 rounded-xl shadow-inner flex justify-center overflow-hidden h-[500px] sm:h-[610px] md:h-[720px] lg:h-[830px] xl:h-[720px] 2xl:h-[890px] transition-all duration-300">
                     <div className="transform scale-[0.4] sm:scale-[0.5] md:scale-[0.6] lg:scale-[0.7] xl:scale-[0.6] 2xl:scale-[0.75] origin-top bg-white shadow-2xl transition-transform duration-300">
-                        <InvoiceTemplate data={invoiceData} items={items} logo={logo} totals={totals} />
+                        <InvoiceTemplate data={invoiceData} items={items} logo={logo} totals={totals} plan={USER_PLAN} />
                     </div>
                 </div>
                 

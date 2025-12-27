@@ -1,14 +1,38 @@
-import React from 'react';
-import { Plus, Search, MoreVertical, Tag, Package } from 'lucide-react';
+
+import React, { useState } from 'react';
+import { Plus, Search, MoreVertical, Tag, Package, Trash2 } from 'lucide-react';
 import Button from '../components/Button';
+import { useData } from '../context/DataContext';
+import Modal from '../components/Modal';
 
 const ProductsPage: React.FC = () => {
-  const MOCK_PRODUCTS = [
-    { id: 1, name: 'Webdesign Pauschale', desc: 'Erstellung einer Landing Page', price: 1500.00, unit: 'Psch', type: 'service' },
-    { id: 2, name: 'Wartungsvertrag Basic', desc: 'Monatliche Updates & Backup', price: 49.00, unit: 'Monat', type: 'service' },
-    { id: 3, name: 'SEO Analyse', desc: 'Einmaliger Audit', price: 350.00, unit: 'Stk', type: 'service' },
-    { id: 4, name: 'Lizenzschlüssel Pro', desc: 'Software Lizenz für 1 Jahr', price: 120.00, unit: 'Jahr', type: 'product' },
-  ];
+  const { products, addProduct, deleteProduct } = useData();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    desc: '',
+    price: '',
+    unit: 'Stk',
+    type: 'service' as 'service' | 'product'
+  });
+
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    addProduct({
+        name: newProduct.name,
+        desc: newProduct.desc,
+        price: parseFloat(newProduct.price) || 0,
+        unit: newProduct.unit,
+        type: newProduct.type
+    });
+    setIsModalOpen(false);
+    setNewProduct({ name: '', desc: '', price: '', unit: 'Stk', type: 'service' });
+  };
 
   return (
     <div className="min-h-screen bg-velo-light dark:bg-slate-950 pt-24 pb-12 transition-colors duration-300">
@@ -18,7 +42,7 @@ const ProductsPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-velo-dark dark:text-white">Produkte & Services</h1>
             <p className="text-velo-dark/60 dark:text-slate-400">Verwalten Sie Ihre Artikel für die schnelle Rechnungserstellung.</p>
           </div>
-          <Button className="bg-velo-blue hover:bg-velo-blue/90">
+          <Button className="bg-velo-blue hover:bg-velo-blue/90" onClick={() => setIsModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Neuer Artikel
           </Button>
         </div>
@@ -30,6 +54,8 @@ const ProductsPage: React.FC = () => {
                     <input 
                         type="text" 
                         placeholder="Artikel suchen..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-velo-blue/20 dark:text-white"
                     />
                 </div>
@@ -48,7 +74,7 @@ const ProductsPage: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-                        {MOCK_PRODUCTS.map((prod) => (
+                        {filteredProducts.map((prod) => (
                             <tr key={prod.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
                                 <td className="px-6 py-4 font-bold text-velo-dark dark:text-white">
                                     {prod.name}
@@ -72,8 +98,11 @@ const ProductsPage: React.FC = () => {
                                     {prod.unit}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full text-gray-500 transition-colors">
-                                        <MoreVertical size={16} />
+                                    <button 
+                                        onClick={() => deleteProduct(prod.id)}
+                                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-600 rounded-full transition-colors"
+                                    >
+                                        <Trash2 size={16} />
                                     </button>
                                 </td>
                             </tr>
@@ -82,6 +111,82 @@ const ProductsPage: React.FC = () => {
                 </table>
             </div>
         </div>
+
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Neuen Artikel anlegen">
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <label className="block text-sm font-medium mb-1 dark:text-white">Bezeichnung*</label>
+                    <input 
+                        required
+                        type="text" 
+                        className="w-full p-2 border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                        value={newProduct.name}
+                        onChange={e => setNewProduct({...newProduct, name: e.target.value})}
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium mb-1 dark:text-white">Beschreibung</label>
+                    <input 
+                        type="text" 
+                        className="w-full p-2 border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                        value={newProduct.desc}
+                        onChange={e => setNewProduct({...newProduct, desc: e.target.value})}
+                    />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1 dark:text-white">Preis (Netto)*</label>
+                        <input 
+                            required
+                            type="number" 
+                            step="0.01"
+                            className="w-full p-2 border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                            value={newProduct.price}
+                            onChange={e => setNewProduct({...newProduct, price: e.target.value})}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1 dark:text-white">Einheit</label>
+                        <select 
+                             className="w-full p-2 border rounded dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                             value={newProduct.unit}
+                             onChange={e => setNewProduct({...newProduct, unit: e.target.value})}
+                        >
+                            <option value="Stk">Stück</option>
+                            <option value="Std">Stunde</option>
+                            <option value="Psch">Pauschal</option>
+                            <option value="Monat">Monat</option>
+                            <option value="Jahr">Jahr</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                     <label className="block text-sm font-medium mb-1 dark:text-white">Typ</label>
+                     <div className="flex gap-4">
+                         <label className="flex items-center gap-2 dark:text-white cursor-pointer">
+                             <input 
+                                type="radio" 
+                                name="type" 
+                                checked={newProduct.type === 'service'} 
+                                onChange={() => setNewProduct({...newProduct, type: 'service'})}
+                             /> Dienstleistung
+                         </label>
+                         <label className="flex items-center gap-2 dark:text-white cursor-pointer">
+                             <input 
+                                type="radio" 
+                                name="type" 
+                                checked={newProduct.type === 'product'} 
+                                onChange={() => setNewProduct({...newProduct, type: 'product'})}
+                             /> Produkt (Ware)
+                         </label>
+                     </div>
+                </div>
+                <div className="pt-4 flex justify-end gap-2">
+                    <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Abbrechen</Button>
+                    <Button type="submit">Speichern</Button>
+                </div>
+            </form>
+        </Modal>
       </div>
     </div>
   );
